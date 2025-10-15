@@ -1,0 +1,96 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Production
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Secrets & Credentials (IMPORTANT!)
+google-credentials.json
+expanded-rider-217013-*.json
+*.pem
+*.key
+.env*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Rapports temporaires (contiennent des API keys)
+*CAPROVER*.md
+*VALIDATION*.md
+*SUCCESS_REPORT*.md
+*STATUS*.md
+*AWS_FIX*.md
+*AWS_KEYS*.md
+*QUICK_FIX*.md
+*RAPPORT*.md
+*FINAL*.md
+*IMPLEMENTATION*.md
+*SPRINT*.md
+*ANALYSE*.md
+*AMELIORATIONS*.md
+*CORRECTIONS*.md
+*CTO*.md
+*DEPLOYMENT*.md
+*EMAIL*.md
+*EXPLICATION*.md
+*FEATURE*.md
+*GUIDE*.md
+*IA_*.md
+*INTEGRATION*.md
+*LOCALHOST*.md
+*LOGS*.md
+*PDF*.md
+*PERSISTENCE*.md
+*PROCHAINES*.md
+*PROMPT*.md
+*QUICK*.md
+*RECAPITULATIF*.md
+*REPONSE*.md
+*REVUE*.md
+*SESSION*.md
+*SETUP*.md
+*SOLUTION*.md
+*STORAGE*.md
+*STRATEGIES*.md
+*SYNTHESE*.md
+*TEMPS*.md
+*VERIFICATION*.md
+
+/lib/generated/prisma
+/uploads/
