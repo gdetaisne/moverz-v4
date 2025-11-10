@@ -77,7 +77,7 @@ Création d'une migration baseline `20251110145330_baseline` qui contient :
 - [ ] Vérifier les données : `psql $DATABASE_URL -c 'SELECT COUNT(*) FROM "AnalyticsEvent";'`
 
 ### Phase 4 : Prévention ✅ PRÉPARÉ
-- [x] Documenter le process : `docs/GUIDE_MIGRATIONS_PRODUCTION.md`
+- [x] Documenter le process : `docs/migrations-production.md`
 - [x] Script automatique créé : `scripts/apply-migrations-prod.sh`
 - [ ] Mettre à jour `deploy-caprover.sh` pour ajouter `prisma migrate deploy`
 
@@ -140,7 +140,7 @@ pnpm prisma migrate deploy
 - Scripts prêts pour la production
 
 ✅ **Documentation**
-- Guide complet : `docs/GUIDE_MIGRATIONS_PRODUCTION.md`
+- Guide complet : `docs/migrations-production.md`
 - Script automatique : `scripts/apply-migrations-prod.sh`
 
 ### Ce qu'il reste à faire (nécessite accès CapRover)
@@ -197,7 +197,7 @@ psql $DATABASE_URL -c "\dt AnalyticsEvent"
 
 ### Support
 
-En cas de problème, consulter `docs/GUIDE_MIGRATIONS_PRODUCTION.md` pour :
+En cas de problème, consulter `docs/migrations-production.md` pour :
 - Troubleshooting détaillé
 - Options de rollback
 - Commandes de diagnostic
