@@ -36,9 +36,9 @@ Pour l'instant, nous devons rendre l'API `/api/rooms` fonctionnelle avec :
 - Appliquer sur toutes les routes `/api/*`
 
 #### POST /api/rooms
-- Body : `{ name: string }` (min 1 caractère)
+- Body : `{ name: string, roomType: string }` (min 1 caractère chacun)
 - Validation Zod
-- Créer via Prisma : `{ name, userId }`
+- Créer via Prisma : `{ name, roomType, userId }`
 - Retour : 201 + JSON de la room créée
 
 #### GET /api/rooms
@@ -90,33 +90,85 @@ Pour l'instant, nous devons rendre l'API `/api/rooms` fonctionnelle avec :
 
 ## État d'avancement
 
-**Statut : 🔄 En cours**
+**Statut : ✅ Prêt pour tests manuels**
 
 Checklist :
-- [ ] Analyse existant
-- [ ] Schéma Prisma
-- [ ] Validation Zod
-- [ ] Routes API
-- [ ] Middleware Auth
-- [ ] Tests curl
+- [x] Analyse existant (DÉCOUVERTE: API déjà implémentée)
+- [x] Schéma Prisma (Room avec roomType existant)
+- [x] Validation Zod (createRoomSchema complet)
+- [x] Routes API (POST et GET implémentés)
+- [x] Middleware Auth (getUserId local implémenté)
+- [x] Script de test créé (scripts/test-api-rooms.sh)
+- [ ] Tests curl à exécuter manuellement
 
 ## Commits liés
 
-(À compléter au fur et à mesure)
+- [84774f2] Setup: Implémenter les best practices Cursor (2025-11-10)
+- [bee2bd0] t001: Update commit journal with setup entry (2025-11-10)
 
 ## Notes futures
 
 ### Critères d'acceptation (must)
-1. `curl -sS -X POST http://localhost:3001/api/rooms -H "content-type: application/json" -H "x-user-id: test-user-123" -d '{"name":"Salon"}' → 201`
+1. `curl -sS -X POST http://localhost:3001/api/rooms -H "content-type: application/json" -H "x-user-id: test-user-123" -d '{"name":"Salon","roomType":"living_room"}' → 201`
 2. `curl -sS "http://localhost:3001/api/rooms?userId=test-user-123" → 200` et contient "Salon"
 
-### Points à documenter
-- Architecture middleware choisie
-- Structure de validation Zod
-- Pattern error handling retenu
+### Points documentés
+
+**Architecture auth** : 
+- Fonction locale `getUserId()` dans route.ts
+- Accepte x-user-id (case-insensitive) et ?userId= query param
+- Upsert automatique de l'utilisateur
+- Alternative disponible : lib/auth.ts (plus complet avec cookies)
+
+**Validation Zod** :
+- Schema `createRoomSchema` avec name + roomType obligatoires
+- Messages d'erreur en français
+- Retour 400 si validation échoue
+
+**Error handling** :
+- Try/catch global dans chaque handler
+- Retour JSON `{message}` standardisé
+- Console.error pour logging en dev
+- Status codes appropriés (201, 200, 400, 401, 500)
+
+**Découverte importante** :
+- L'API était déjà entièrement implémentée
+- Spec t001 mise à jour pour inclure roomType (requis par le schéma DB)
+- Contrainte unique sur (userId, roomType) dans Prisma
+
+### Script de test créé
+
+`scripts/test-api-rooms.sh` - Tests automatisés :
+1. POST /api/rooms → 201
+2. GET /api/rooms → 200 + données
+3. Header case-insensitive
+4. Validation Zod (400)
+5. Auth requise (401)
+
+### Instructions pour exécuter les tests
+
+```bash
+# 1. Configurer .env
+cat > .env << 'EOF'
+DATABASE_URL="file:./prisma/dev.db"
+AI_SERVICE_URL="http://localhost:8000"
+EOF
+
+# 2. Setup DB
+pnpm prisma db push --accept-data-loss
+
+# 3. Démarrer serveur (port 4000 pour éviter conflits)
+PORT=4000 pnpm dev
+
+# 4. Dans un autre terminal, exécuter les tests
+chmod +x scripts/test-api-rooms.sh
+./scripts/test-api-rooms.sh
+```
 
 ### Tasks futures identifiées
-- Migration vers Express standalone (t002 ?)
-- Authentification JWT production (t003 ?)
-- Tests automatisés (t004 ?)
+- Refactoriser auth pour utiliser lib/auth.ts (uniformisation)
+- Migration vers Express standalone (backend séparé)
+- Authentification JWT production
+- Tests automatisés avec vitest
+- Retourner à PostgreSQL en production (actuellement SQLite pour dev)
 
