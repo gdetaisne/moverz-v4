@@ -11,7 +11,6 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY scripts/ ./scripts/
 COPY packages/ ./packages/
-COPY apps/ ./apps/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
