@@ -90,7 +90,7 @@ Pour l'instant, nous devons rendre l'API `/api/rooms` fonctionnelle avec :
 
 ## État d'avancement
 
-**Statut : ✅ Prêt pour tests manuels**
+**Statut : ✅ Terminé**
 
 Checklist :
 - [x] Analyse existant (DÉCOUVERTE: API déjà implémentée)
@@ -99,12 +99,18 @@ Checklist :
 - [x] Routes API (POST et GET implémentés)
 - [x] Middleware Auth (getUserId local implémenté)
 - [x] Script de test créé (scripts/test-api-rooms.sh)
-- [ ] Tests curl à exécuter manuellement
+- [x] Tests curl exécutés et validés
+- [x] PostgreSQL local configuré (identique prod)
+- [x] Base de données créée et migrée
+- [x] Critères d'acceptation validés ✅
 
 ## Commits liés
 
 - [84774f2] Setup: Implémenter les best practices Cursor (2025-11-10)
 - [bee2bd0] t001: Update commit journal with setup entry (2025-11-10)
+- [d2c3261] t001: Créer script de test et documentation API rooms (2025-11-10)
+- [à venir] Fix: Revenir à PostgreSQL dans schema.prisma (2025-11-10)
+- [à venir] t001: Configuration PostgreSQL locale + tests validés (2025-11-10)
 
 ## Notes futures
 
@@ -164,6 +170,31 @@ PORT=4000 pnpm dev
 chmod +x scripts/test-api-rooms.sh
 ./scripts/test-api-rooms.sh
 ```
+
+### Résultats des tests (2025-11-10)
+
+**Environnement** :
+- PostgreSQL 14 local (user: monitoring, db: monitoring)
+- Port : 4000
+- DATABASE_URL: postgresql://monitoring:monitoring123@localhost:5432/monitoring
+
+**Tests exécutés** :
+```bash
+✅ POST /api/rooms avec x-user-id → 201
+   Room créée: {"id":"e570d2aa-...","name":"Salon","roomType":"living_room"}
+
+✅ GET /api/rooms?userId=test-user-123 → 200
+   Contient bien la room "Salon"
+
+✅ Header case-insensitive (X-User-Id) → 201
+
+✅ Validation Zod (roomType manquant) → 400
+   Message: {"message":"Required"}
+
+✅ Auth requise (sans x-user-id) → 401
+```
+
+**Critères d'acceptation : VALIDÉS ✅**
 
 ### Tasks futures identifiées
 - Refactoriser auth pour utiliser lib/auth.ts (uniformisation)
