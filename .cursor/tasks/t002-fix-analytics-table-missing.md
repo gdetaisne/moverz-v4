@@ -38,40 +38,64 @@ Cette erreur apparaît à chaque tentative de tracking d'événement analytics.
 
 ## Implémentation
 
-### Phase 1 : Diagnostic
-- [ ] Vérifier le modèle AnalyticsEvent dans schema.prisma
-- [ ] Lister les migrations Prisma existantes
-- [ ] Se connecter à la DB prod pour voir les tables existantes
-- [ ] Identifier la migration manquante
+### Phase 1 : Diagnostic ✅ TERMINÉ
+- [x] Vérifier le modèle AnalyticsEvent dans schema.prisma
+  - ✅ Le modèle existe dans `schema.prisma`
+  - ✅ Structure complète avec userId, eventType, metadata, timestamps
+- [x] Lister les migrations Prisma existantes
+  - ✅ 6 migrations trouvées dans `prisma/migrations/`
+  - ✅ Fichier isolé `analytics_event.sql` NON intégré dans les migrations
+- [x] Identifier la migration manquante
+  - ✅ Cause racine : `analytics_event.sql` créé manuellement hors du système Prisma
+  - ✅ Solution : Créer une migration baseline contenant TOUT le schéma actuel
 
-### Phase 2 : Application migration
-- [ ] Se connecter à CapRover
-- [ ] Exécuter `pnpm prisma migrate deploy` (ou db push)
-- [ ] Vérifier que la table est créée
+**Diagnostic détaillé :**
+Le fichier `prisma/migrations/analytics_event.sql` contient le CREATE TABLE pour AnalyticsEvent, mais ce fichier n'était pas dans une migration valide. Prisma ne l'a donc jamais appliqué en production.
+
+**Solution implémentée :**
+Création d'une migration baseline `20251110145330_baseline` qui contient :
+- Tous les CREATE TABLE du schéma actuel
+- Tous les CREATE INDEX
+- La table AnalyticsEvent manquante
+- Les autres tables (Asset, Job, Batch, AiMetric, etc.)
+
+### Phase 2 : Application migration — ⏳ EN ATTENTE PRODUCTION
+- [ ] Se connecter à CapRover (action manuelle requise)
+- [ ] Exécuter le script `scripts/apply-migrations-prod.sh`
+  - OU : `pnpm prisma migrate deploy` directement
+- [ ] Vérifier que toutes les migrations sont appliquées
+
+**Préparation locale ✅ :**
+- [x] Baseline migration créée
+- [x] Migration marquée comme appliquée en local
+- [x] DB locale testée et fonctionnelle
+- [x] Script d'application créé : `scripts/apply-migrations-prod.sh`
 
 ### Phase 3 : Vérification
-- [ ] Tester un événement analytics
+- [ ] Après application en prod, tester un événement analytics
 - [ ] Vérifier les logs CapRover (plus d'erreur P2021)
-- [ ] Vérifier les données dans la table
+- [ ] Vérifier les données : `psql $DATABASE_URL -c 'SELECT COUNT(*) FROM "AnalyticsEvent";'`
 
-### Phase 4 : Prévention
-- [ ] Documenter le process de migration
-- [ ] Ajouter un check pre-deploy
-- [ ] Mettre à jour les scripts de déploiement
+### Phase 4 : Prévention ✅ PRÉPARÉ
+- [x] Documenter le process : `docs/GUIDE_MIGRATIONS_PRODUCTION.md`
+- [x] Script automatique créé : `scripts/apply-migrations-prod.sh`
+- [ ] Mettre à jour `deploy-caprover.sh` pour ajouter `prisma migrate deploy`
 
 ## État d'avancement
 
-**Statut : 📋 À faire**
+**Statut : ⏳ Prêt pour application en production**
 
 Checklist :
-- [ ] Diagnostic
-- [ ] Migration appliquée
-- [ ] Tests validés
-- [ ] Documentation
+- [x] Diagnostic (cause identifiée)
+- [x] Migration baseline créée
+- [x] DB locale testée
+- [x] Scripts et documentation préparés
+- [ ] **ACTION REQUISE** : Appliquer en production
+- [ ] Tests de vérification post-migration
 
 ## Commits liés
 
-(À compléter)
+(Voir `.cursor/tasks/commits/t002.md`)
 
 ## Notes futures
 
@@ -99,4 +123,82 @@ psql $DATABASE_URL -c "\dt"
 # Appliquer les migrations
 pnpm prisma migrate deploy
 ```
+
+---
+
+## 🚀 PROCHAINES ÉTAPES (Action manuelle requise)
+
+### Ce qui a été fait automatiquement
+
+✅ **Diagnostic complet**
+- Cause identifiée : fichier `analytics_event.sql` non intégré aux migrations Prisma
+- Solution : migration baseline créée avec tout le schéma
+
+✅ **Préparation locale**
+- Migration `20251110145330_baseline` créée et testée
+- DB locale PostgreSQL configurée et fonctionnelle
+- Scripts prêts pour la production
+
+✅ **Documentation**
+- Guide complet : `docs/GUIDE_MIGRATIONS_PRODUCTION.md`
+- Script automatique : `scripts/apply-migrations-prod.sh`
+
+### Ce qu'il reste à faire (nécessite accès CapRover)
+
+#### Option 1 : Via script (RECOMMANDÉ) 🎯
+
+```bash
+# 1. SSH vers CapRover
+ssh captain@[ton-serveur-caprover]
+
+# 2. Aller dans le répertoire de l'app
+cd /captain/apps/moverz-v4
+
+# 3. Exécuter le script
+./scripts/apply-migrations-prod.sh
+```
+
+#### Option 2 : Manuelle
+
+```bash
+# 1. SSH vers CapRover
+ssh captain@[ton-serveur-caprover]
+
+# 2. Aller dans l'app
+cd /captain/apps/moverz-v4
+
+# 3. Appliquer
+pnpm prisma migrate deploy
+
+# 4. Vérifier
+pnpm prisma migrate status
+```
+
+### Vérification après application
+
+```bash
+# Vérifier que la table existe
+psql $DATABASE_URL -c "\dt AnalyticsEvent"
+
+# Devrait afficher :
+#          List of relations
+#  Schema |      Name        | Type  |  Owner
+# --------+------------------+-------+----------
+#  public | AnalyticsEvent   | table | monitoring
+```
+
+### Vérifier les logs CapRover
+
+- Dashboard CapRover > Apps > moverz-v4 > View Logs
+- **Avant** : Erreur `P2021` récurrente
+- **Après** : Plus d'erreur liée à AnalyticsEvent
+
+---
+
+### Support
+
+En cas de problème, consulter `docs/GUIDE_MIGRATIONS_PRODUCTION.md` pour :
+- Troubleshooting détaillé
+- Options de rollback
+- Commandes de diagnostic
 
