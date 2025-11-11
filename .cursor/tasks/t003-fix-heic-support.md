@@ -63,14 +63,60 @@ source: bad seek to [various positions]
 
 ## État d'avancement
 
-**Statut : 📋 À faire**
+**Statut : ✅ Implémenté - En attente déploiement**
 
 Checklist :
-- [ ] Recherche solution
-- [ ] Dockerfile modifié
-- [ ] Tests locaux
+- [x] Recherche solution
+- [x] Dockerfile modifié
+- [ ] Tests locaux (Docker build)
 - [ ] Déployé en prod
 - [ ] Vérifié en prod
+
+### Solution implémentée
+
+**Date** : 10 novembre 2025
+
+**Modifications Dockerfile** :
+
+1. **Stage 1 (deps)** : Ajout des dépendances de build pour Sharp avec HEIC
+   ```dockerfile
+   RUN apk add --no-cache \
+       libc6-compat \
+       python3 \
+       make \
+       g++ \
+       vips-dev \
+       fftw-dev \
+       libpng-dev \
+       libwebp-dev \
+       libjpeg-turbo-dev \
+       libheif-dev \
+       build-base
+   ```
+
+2. **Stage 3 (runner)** : Ajout des bibliothèques runtime pour Sharp
+   ```dockerfile
+   RUN apk add --no-cache \
+       vips \
+       libheif \
+       libde265 \
+       x265-libs \
+       libjpeg-turbo \
+       libwebp \
+       libpng
+   ```
+
+**Packages clés** :
+- `libheif-dev` (build) + `libheif` (runtime) : Décodeur HEIC/HEIF
+- `libde265` : Décodeur H.265 (requis par libheif)
+- `x265-libs` : Encodeur H.265
+- `vips-dev` (build) + `vips` (runtime) : Bibliothèque d'images utilisée par Sharp
+
+**Comment ça marche** :
+- Sharp détecte automatiquement les bibliothèques installées
+- Quand un fichier HEIC arrive, Sharp utilise libheif pour le décoder
+- L'image est ensuite convertie en JPEG pour l'IA (via `optimizeImageForAI`)
+- Plus besoin de modifications dans le code TypeScript !
 
 ## Commits liés
 

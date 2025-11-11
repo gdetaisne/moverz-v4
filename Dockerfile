@@ -1,6 +1,17 @@
 # Stage 1: Dependencies
 FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat python3 make g++
+RUN apk add --no-cache \
+    libc6-compat \
+    python3 \
+    make \
+    g++ \
+    vips-dev \
+    fftw-dev \
+    libpng-dev \
+    libwebp-dev \
+    libjpeg-turbo-dev \
+    libheif-dev \
+    build-base
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -42,6 +53,17 @@ RUN pnpm build
 
 # Stage 3: Runner
 FROM node:20-alpine AS runner
+
+# Installer les dépendances runtime pour Sharp avec support HEIC
+RUN apk add --no-cache \
+    vips \
+    libheif \
+    libde265 \
+    x265-libs \
+    libjpeg-turbo \
+    libwebp \
+    libpng
+
 WORKDIR /app
 
 ENV NODE_ENV production
