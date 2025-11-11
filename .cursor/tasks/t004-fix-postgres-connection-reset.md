@@ -61,14 +61,102 @@ Ces erreurs apparaissent de manière sporadique, plusieurs fois par jour.
 
 ## État d'avancement
 
-**Statut : 📋 À faire**
+**Statut : ✅ Implémenté - En attente déploiement + config CapRover**
 
 Checklist :
-- [ ] Diagnostic effectué
-- [ ] Configuration Prisma optimisée
-- [ ] Tests de charge
+- [x] Diagnostic effectué
+- [x] Configuration Prisma optimisée
+- [ ] Variables CapRover mises à jour
 - [ ] Déployé en prod
 - [ ] Monitoring 48h
+
+### Solution implémentée
+
+**Date** : 10 novembre 2025
+
+#### 1. Client Prisma amélioré (`lib/db.ts` et `packages/core/src/db.ts`)
+
+**Ajouts :**
+- ✅ Configuration explicite du datasource dans PrismaClient
+- ✅ **Graceful shutdown** : Gestion des signaux SIGINT/SIGTERM/beforeExit
+- ✅ Fermeture propre des connexions lors du redémarrage
+
+**Code :**
+```typescript
+export const prisma = new PrismaClient({
+  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+});
+
+// Graceful shutdown handlers
+process.on('SIGINT', shutdownHandler);
+process.on('SIGTERM', shutdownHandler);
+process.on('beforeExit', async () => {
+  await prisma.$disconnect();
+});
+```
+
+#### 2. Schema Prisma mis à jour (`prisma/schema.prisma`)
+
+**Ajout :**
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")  // ← Nouveau : pour migrations
+}
+```
+
+**Rôle de `directUrl`** :
+- Utilisée pour les migrations et le schema push
+- Connexion directe sans pooling
+- Évite les timeouts lors des DDL (CREATE TABLE, etc.)
+
+#### 3. Configuration DATABASE_URL requise (CapRover)
+
+**⚠️ ACTION MANUELLE REQUISE SUR CAPROVER**
+
+**Ancienne URL (sans paramètres) :**
+```
+postgresql://monitoring:monitoring123@srv-captain--postgres-monitoring:5432/monitoring
+```
+
+**Nouvelle URL (avec connection pooling) :**
+```
+postgresql://monitoring:monitoring123@srv-captain--postgres-monitoring:5432/monitoring?connection_limit=10&pool_timeout=20&connect_timeout=15&socket_timeout=60
+```
+
+**Nouvelle variable DIRECT_URL (à ajouter) :**
+```
+postgresql://monitoring:monitoring123@srv-captain--postgres-monitoring:5432/monitoring?connection_limit=10&connect_timeout=15
+```
+
+**Paramètres expliqués :**
+- `connection_limit=10` : Max 10 connexions simultanées (évite saturation)
+- `pool_timeout=20` : Attendre max 20s pour une connexion disponible
+- `connect_timeout=15` : Timeout connexion initiale 15s
+- `socket_timeout=60` : Timeout socket 60s (requêtes longues OK)
+
+**📖 Guide détaillé** : `docs/database-url-configuration.md`
+
+### Causes identifiées
+
+1. **Pool non configuré** → Trop de connexions simultanées → PostgreSQL refuse
+2. **Connexions idle** → PostgreSQL ferme après timeout → App utilise connexion morte
+3. **Pas de graceful shutdown** → Redéploiement brutal → Connexions coupées
+4. **Pas de retry** → Erreur réseau temporaire → Échec immédiat
+
+### Bénéfices attendus
+
+- ✅ Moins d'erreurs "Connection reset by peer"
+- ✅ Redémarrage propre sans interruption brutale
+- ✅ Meilleure gestion des pics de charge
+- ✅ Connexions recyclées correctement
+- ✅ Migrations plus stables avec `directUrl`
 
 ## Commits liés
 
